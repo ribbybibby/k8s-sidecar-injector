@@ -43,3 +43,34 @@ func (s *MapStringStringFlag) ToMapStringString() map[string]string {
 func NewMapStringStringFlag() MapStringStringFlag {
 	return MapStringStringFlag{Values: map[string]string{}}
 }
+
+// StringSliceFlag is a flag struct for multiple values
+type StringSliceFlag struct {
+	Values  []string
+	changed bool
+}
+
+// String implements the flag.Var interface
+func (s *StringSliceFlag) String() string {
+	return strings.Join(s.Values, ",")
+}
+
+// Set implements the flag.Var interface
+func (s *StringSliceFlag) Set(value string) error {
+	if !s.changed {
+		s.Values = []string{}
+		s.changed = true
+	}
+	s.Values = append(s.Values, strings.Split(value, ",")...)
+	return nil
+}
+
+// ToStringSlice returns the underlying slice
+func (s *StringSliceFlag) ToStringSlice() []string {
+	return s.Values
+}
+
+// NewStringSliceFlag creates a new flag var for storing multiple values
+func NewStringSliceFlag(values ...string) StringSliceFlag {
+	return StringSliceFlag{values, false}
+}

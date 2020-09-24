@@ -9,6 +9,7 @@ ANNOTATION_NAMESPACE="${ANNOTATION_NAMESPACE:-injector.tumblr.com}"
 CONFIGMAP_LABELS="${CONFIGMAP_LABELS:-app=k8s-sidecar-injector}"
 CONFIGMAP_NAMESPACE="${CONFIGMAP_NAMESPACE:-}"
 ANNOTATION_NAMESPACE="${ANNOTATION_NAMESPACE:-injector.tumblr.com}"
+IGNORED_NAMESPACES="${IGNORED_NAMESPACES:-kube-system,kube-public}"
 LOG_LEVEL="${LOG_LEVEL:-2}"
 echo "k8s-sidecar-injector starting at $(date) with TLS_PORT=${TLS_PORT} CONFIG_DIR=${CONFIG_DIR} TLS_CERT_FILE=${TLS_CERT_FILE} TLS_KEY_FILE=${TLS_KEY_FILE}"
 set -x
@@ -23,4 +24,5 @@ exec k8s-sidecar-injector \
   --configmap-labels="${CONFIGMAP_LABELS}" \
   --configmap-namespace="${CONFIGMAP_NAMESPACE}" \
   --annotation-namespace="${ANNOTATION_NAMESPACE}" \
+  --ignored-namespaces="${IGNORED_NAMESPACES}" \
   "$@"

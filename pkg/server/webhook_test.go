@@ -99,7 +99,8 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	s := &WebhookServer{
-		Config: c,
+		Config:            c,
+		IgnoredNamespaces: testIgnoredNamespaces,
 		Server: &http.Server{
 			Addr: ":6969",
 		},
@@ -115,7 +116,7 @@ func TestLoadConfig(t *testing.T) {
 		if err := yaml.Unmarshal(data, &obj); err != nil {
 			t.Fatalf("unable to unmarshal object metadata yaml: %v", err)
 		}
-		key, err := s.getSidecarConfigurationRequested(testIgnoredNamespaces, obj)
+		key, err := s.getSidecarConfigurationRequested(obj)
 		if err != test.expectedError {
 			t.Fatalf("%s: (expectedSidecar %s) error: %v did not match %v (k %v)", test.configuration, test.expectedSidecar, err, test.expectedError, key)
 		}

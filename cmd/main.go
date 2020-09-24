@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dyson/certman"
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -21,8 +22,7 @@ import (
 	"github.com/tumblr/k8s-sidecar-injector/internal/pkg/version"
 	"github.com/tumblr/k8s-sidecar-injector/pkg/coalescer"
 	"github.com/tumblr/k8s-sidecar-injector/pkg/server"
-
-	"github.com/dyson/certman"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -55,6 +55,7 @@ func main() {
 	)
 	cmWatcherLabels := NewMapStringStringFlag()
 	watcherConfig := watcher.NewConfig()
+	ignoredNamespaces := NewStringSliceFlag(metav1.NamespaceSystem, metav1.NamespacePublic)
 
 	// get command line parameters
 	flag.IntVar(&parameters.LifecyclePort, "lifecycle-port", 9000, "Metrics and introspection port (metrics, healthchecking, etc)")
@@ -67,6 +68,7 @@ func main() {
 	flag.Var(&cmWatcherLabels, "configmap-labels", "Label pairs used to discover ConfigMaps in Kubernetes. These should be key1=value[,key2=val2,...]")
 	flag.StringVar(&watcherConfig.MasterURL, "master-url", "", "Kubernetes master URL (used for running outside of the cluster)")
 	flag.StringVar(&watcherConfig.Kubeconfig, "kubeconfig", "", "Kubernetes kubeconfig (used only for running outside of the cluster)")
+	flag.Var(&ignoredNamespaces, "ignored-namespaces", "Namespaces that the webhook will ignore, provided as a comma-delimited list")
 	flag.Parse()
 
 	watcherConfig.ConfigMapLabels = cmWatcherLabels.ToMapStringString()
@@ -163,7 +165,8 @@ func main() {
 
 	// web server terminating TLS for handling k8s webhooks
 	whsvr := &server.WebhookServer{
-		Config: cfg,
+		Config:            cfg,
+		IgnoredNamespaces: ignoredNamespaces.ToStringSlice(),
 		Server: &http.Server{
 			Addr: fmt.Sprintf(":%v", parameters.TLSPort),
 		},
