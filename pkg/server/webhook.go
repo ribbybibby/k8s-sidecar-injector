@@ -78,11 +78,6 @@ var (
 	)
 )
 
-var ignoredNamespaces = []string{
-	metav1.NamespaceSystem,
-	metav1.NamespacePublic,
-}
-
 // WebhookServer is a server that handles mutating admission webhooks
 type WebhookServer struct {
 	Config *config.Config
@@ -136,15 +131,7 @@ func (whsvr *WebhookServer) requestAnnotationKey() string {
 
 // Check whether the target resoured need to be mutated. returns the canonicalized full name of the injection config
 // if found, or an error if not.
-func (whsvr *WebhookServer) getSidecarConfigurationRequested(ignoredList []string, metadata *metav1.ObjectMeta) (string, error) {
-	// skip special kubernetes system namespaces
-	for _, namespace := range ignoredList {
-		if metadata.Namespace == namespace {
-			glog.Infof("Pod %s/%s should skip injection due to ignored namespace", metadata.Name, metadata.Namespace)
-			return "", ErrSkipIgnoredNamespace
-		}
-	}
-
+func (whsvr *WebhookServer) getSidecarConfigurationRequested(metadata *metav1.ObjectMeta) (string, error) {
 	annotations := metadata.GetAnnotations()
 	if annotations == nil {
 		annotations = map[string]string{}
@@ -511,7 +498,7 @@ func (whsvr *WebhookServer) mutate(req *v1beta1.AdmissionRequest) *v1beta1.Admis
 		req.Kind, req.Namespace, req.Name, pod.Name, req.UID, req.Operation, req.UserInfo)
 
 	// determine whether to perform mutation
-	injectionKey, err := whsvr.getSidecarConfigurationRequested(ignoredNamespaces, &pod.ObjectMeta)
+	injectionKey, err := whsvr.getSidecarConfigurationRequested(&pod.ObjectMeta)
 	if err != nil {
 		glog.Infof("Skipping mutation of %s/%s: %v", pod.Namespace, pod.Name, err)
 		reason := GetErrorReason(err)
